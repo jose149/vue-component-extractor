@@ -12,8 +12,9 @@ enum MainHTMLTag{
 
 interface VueTag{
 	id: MainHTMLTag;
-	index: number
 	content: string;
+	startIndex: number;
+	endIndex?: number;
 }
 
 // This method is called when your extension is activated
@@ -34,33 +35,24 @@ export function activate(context: vscode.ExtensionContext) {
 		const editor = vscode.window.activeTextEditor;
         if (editor && editor.document.languageId === 'vue') {
             const selection = editor.selection;
-            // const selectedRange = new vscode.Range(selection.start, selection.end);
-						const selectedRange = editor.document.getText(editor.selection);
-						const vueContent = editor.document.getText();
 
-						const newVueContent = getNewContent(vueContent, selectedRange);
+						const selectedRangeContent = editor.document.getText(selection);
+						const fileContent = editor.document.getText();
 
-						const classProperty = extractFirstHTMLTagClassProperty(selectedRange);
+						const newComponentStartClass = extractFirstHTMLTagClassProperty(selectedRangeContent);
 
-						if (classProperty) {
-							const pascalCaseClass = kebabToPascalCase(classProperty);
-							const folderPath = path.dirname(editor.document.uri.fsPath);
-							const newFilePath = path.join(folderPath, `${pascalCaseClass}.vue`);
+						if (newComponentStartClass) {
+							const newComponenteContent = getNewContent(fileContent, selectedRangeContent, newComponentStartClass);
+							const newFilePath = getNewFilePath(newComponentStartClass, editor);
 
 							if (!fs.existsSync(newFilePath)) {
-								fs.writeFileSync(newFilePath, newVueContent);
+								fs.writeFileSync(newFilePath, newComponenteContent);
 								vscode.window.showInformationMessage(`New file created at: ${newFilePath}`);
 							} else {
 								vscode.window.showWarningMessage(`File ${newFilePath} already exists`);
 							}
-
-							const selectedText = editor.document.getText(selection);
-							vscode.window.showInformationMessage(`Selected range: ${selectedText}`);
 						}
-						
 
-
-						
 					} else {
             vscode.window.showInformationMessage('Please open a file to use this command');
         }
@@ -89,17 +81,48 @@ function kebabToPascalCase(text: string): string {
 	return text.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
 }
 
-function getNewContent(content: string, selectedRange: string): string {
-	const scriptStart: VueTag = {id: MainHTMLTag.Script, index: content.indexOf('<script'), content: `<script> </script> \n`};
-	const templateStart: VueTag = {id: MainHTMLTag.Template, index: content.indexOf('<template'), content: `<template> \n ${selectedRange} \n </template> \n`};
-	const styleStart: VueTag = {id: MainHTMLTag.Style, index: content.indexOf('<style'), content: `<style> </style> \n`};
+function getNewContent(content: string, selectedRange: string, firstClassFromSelectedRange:string): string {
+	const scriptTag = {id: MainHTMLTag.Script, startIndex: content.indexOf('<script'), content: `<script> </script> \n`};
+	const templateTag = {id: MainHTMLTag.Template, startIndex: content.indexOf('<template'), content: `<template> \n ${selectedRange} \n </template> \n`};
+	const styleTag = {id: MainHTMLTag.Style, startIndex: content.indexOf('<style'), endIndex: content.indexOf('</style'), content: `<style> </style> \n`};
 	
-	const vueTags: VueTag[] = [scriptStart, templateStart, styleStart];
-	vueTags.sort((a, b) => a.index - b.index);
+	const selectedRangeStyleStartIndex = content.indexOf(`.${firstClassFromSelectedRange}`);
+
+	let firstCurlyBraceFound = false;
+	let numberOfCurlyBraces = 0;
+	let selectedRangeStyleEndIndex = undefined;
+
+		for (let i = selectedRangeStyleStartIndex; !(numberOfCurlyBraces === 0 && firstCurlyBraceFound) && i <= styleTag.endIndex; i++) {
+			if(content.charAt(i) === '{'){
+				numberOfCurlyBraces++;
+				firstCurlyBraceFound = true;
+			};
+			if(content.charAt(i) === '}'){
+				numberOfCurlyBraces--;
+				if(firstCurlyBraceFound && numberOfCurlyBraces === 0){
+					selectedRangeStyleEndIndex = i + 1;
+				}
+			};
+		}
+	
+
+	if(selectedRangeStyleEndIndex){
+		const selectedRangeStyleContent = content.substring(selectedRangeStyleStartIndex, selectedRangeStyleEndIndex);
+		styleTag.content = `<style>\n${selectedRangeStyleContent}\n</style>\n`;
+	}
+	
+	const vueTags: VueTag[] = [scriptTag, templateTag, styleTag];
+	vueTags.sort((a, b) => a.startIndex - b.startIndex);
 
 	return vueTags.reduce((acc: string, current:VueTag ): string => {
 		return acc + current.content;
 	}, '');
+}
+
+function getNewFilePath(StartClassName: string, editor: vscode.TextEditor): string{
+	const newComponentStartClassNameInPascalCase = kebabToPascalCase(StartClassName);
+	const folderPath = path.dirname(editor.document.uri.fsPath);
+	return path.join(folderPath, `${newComponentStartClassNameInPascalCase}.vue`);
 }
 
 // This method is called when your extension is deactivated
