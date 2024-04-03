@@ -1,56 +1,32 @@
 <script lang="ts" setup>
-// import SvgIcon from '@/libraries/storybook/svgIcon/SvgIcon.vue';
-import { Project } from '../projectsViewModel';
-import AppLink from '@/components/shared/AppLink/AppLink.vue';
 
-interface SubProjectProps {
-  subProject: Project;
-}
-
-const props = defineProps<SubProjectProps>();
 </script>
 
 <template>
   <a
     class="sub-project"
-    :href="props.subProject.repositoryUrl"
     target="_blank"
     rel="noreferrer"
   >
     <h3 class="sub-project-heading">
-      {{ props.subProject.name }}
     </h3>
     <div class="sub-project-container">
       <img
         loading="lazy"
         class="sub-project-image"
-        :src="props.subProject.image"
-        :alt="props.subProject.name"
       />
       <figcaption class="sub-project-caption">
-        Run {{ props.subProject.name }}
       </figcaption>
       <img
-        v-if="props.subProject.organisationLogo"
         loading="lazy"
-        class="sub-project-organisation-logo"
-        :src="props.subProject.organisationLogo"
-        :alt="props.subProject.organisationLogo"
       />
     </div>
 
     <div class="sub-project-buttons">
       <AppLink
-        v-if="props.subProject.link"
-        type="secondary"
-        :link="props.subProject.link"
       >
         <template #linkContent>Run</template>
       </AppLink>
-      <!-- <button class="sub-project-button" :href="props.subProject.repositoryUrl">
-        Open details
-        <SvgIcon name="RightArrow" :size="{ height: 15, width: 15 }" />
-      </button> -->
     </div>
   </a>
 </template>
@@ -72,26 +48,6 @@ const props = defineProps<SubProjectProps>();
     background-color: $background-color-4;
     cursor: pointer;
     perspective: 100px;
-
-    // @media (hover: hover) {
-    //   &:hover {
-    //     filter: scale(1.1);
-    //   }
-
-    //   &:hover .sub-project-image {
-    //     filter: saturate(0) blur(3px);
-    //   }
-
-    //   &:hover .sub-project-card-caption {
-    //     top: 50%;
-    //     transform: translate(-50%, -50%) rotateX(0deg);
-    //     opacity: 1;
-    //   }
-
-    //   &:hover .sub-project-title {
-    //     transform: rotateX(-45deg);
-    //   }
-    // }
 
     .sub-project-image {
       position: relative;
