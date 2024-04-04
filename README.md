@@ -1,6 +1,6 @@
 # vue-component-extractor README
 
-This is the README for your extension "vue-component-extractor". After writing up a brief description, we recommend including the following sections.
+This extension allows developers to extract a selected range of code to a extracted component
 
 ## Features
 

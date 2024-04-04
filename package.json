@@ -1,6 +1,7 @@
 {
   "name": "vue-component-extractor",
   "displayName": "vue-component-extractor",
+  "publisher": "JoseCrespi",
   "description": "",
   "version": "0.0.1",
   "engines": {
